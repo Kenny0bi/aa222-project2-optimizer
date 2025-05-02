@@ -38,7 +38,7 @@ def penalty_method(f, g, c, x0, n, count, prob, max_iters=40, tol=1e-4):
 
     margin = 10 if prob.startswith("secret") else 0
 
-    for outer in range(2):  
+    for outer in range(2):
         if count() >= n - margin:
             return x_best
         for _ in range(max_iters):
