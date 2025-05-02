@@ -5,9 +5,8 @@ def penalty_method(f, g, c, x0, n, count, prob, max_iters=None, tol=1e-4):
     x_best = np.copy(x)
     best_val = np.inf
 
-    
     if prob == "secret2":
-        rho = 100.0
+        rho = 150.0  
         outer_loops = 1
         max_iters = max_iters or 5
         margin = 30
