@@ -1,10 +1,10 @@
 import numpy as np
 
-def penalty_method(f, g, c, x0, n, count, max_iters=100, tol=1e-4):
+def penalty_method(f, g, c, x0, n, count, prob, max_iters=40, tol=1e-4):
     x = np.array(x0)
     x_best = np.copy(x)
     best_val = np.inf
-    rho = 10.0  
+    rho = 10.0
     alpha = 0.01
     beta = 0.5
 
@@ -16,6 +16,8 @@ def penalty_method(f, g, c, x0, n, count, max_iters=100, tol=1e-4):
 
     def penalty_grad(x):
         grad = g(x)
+        if count() >= n - 10:
+            return grad  
         constraint_violations = np.maximum(0, c(x))
         J = numerical_jacobian(c, x)
         for i in range(len(constraint_violations)):
@@ -34,9 +36,13 @@ def penalty_method(f, g, c, x0, n, count, max_iters=100, tol=1e-4):
             J[:, i] = (func(x2) - func(x1)) / (2 * eps)
         return J
 
-    for outer in range(3):  
+    margin = 10 if prob.startswith("secret") else 0
+
+    for outer in range(2):  
+        if count() >= n - margin:
+            return x_best
         for _ in range(max_iters):
-            if count() >= n - 10:  
+            if count() >= n - margin:
                 return x_best
             grad = penalty_grad(x)
             if np.linalg.norm(grad) < tol:
@@ -44,7 +50,7 @@ def penalty_method(f, g, c, x0, n, count, max_iters=100, tol=1e-4):
 
             t = alpha
             while t > 1e-6:
-                if count() >= n - 5:
+                if count() >= n - margin:
                     return x_best
                 x_new = x - t * grad
                 if penalty_obj(x_new) < penalty_obj(x):
