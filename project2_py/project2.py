@@ -3,14 +3,10 @@ from scipy.stats import qmc
 from project2_py.penalty_method import penalty_method
 
 def optimize(f, g, c, x0, n, count, prob):
-    """
-    Main optimization function for autograder
-    """
     if prob in ['simple1', 'simple2']:
         x_best = np.copy(x0)
         best_val = np.inf
         dim = len(x0)
-
         tries = 1000 if prob == "simple1" else 500
 
         for _ in range(tries):
@@ -26,12 +22,12 @@ def optimize(f, g, c, x0, n, count, prob):
         return x_best
 
     elif prob == 'secret2':
-        # Try penalty method first
-        x_pm = penalty_method(f, g, c, x0, n, count, prob)
+        
+        x_pm = penalty_method(f, g, c, x0, n, count, prob, max_iters=5)
         if np.all(c(x_pm) <= 0):
             return x_pm
 
-        # Fallback: Sobol + Gaussian
+        
         dim = len(x0)
         remaining = n - count() - 1
         num_samples = min(2000, max(1, remaining))
@@ -40,7 +36,7 @@ def optimize(f, g, c, x0, n, count, prob):
         best_val = np.inf
         lowest_violation = np.inf
 
-        # Sobol sampling
+        
         sampler = qmc.Sobol(d=dim, scramble=True)
         safe_samples = max(1, num_samples // 2)
         try:
@@ -65,7 +61,7 @@ def optimize(f, g, c, x0, n, count, prob):
                 x_best = x_try
                 lowest_violation = violation
 
-        # Gaussian fallback
+        
         for _ in range(num_samples // 2):
             if count() >= n - 1:
                 break

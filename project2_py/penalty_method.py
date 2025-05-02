@@ -1,10 +1,22 @@
 import numpy as np
 
-def penalty_method(f, g, c, x0, n, count, prob, max_iters=40, tol=1e-4):
+def penalty_method(f, g, c, x0, n, count, prob, max_iters=None, tol=1e-4):
     x = np.array(x0)
     x_best = np.copy(x)
     best_val = np.inf
-    rho = 10.0
+
+    
+    if prob == "secret2":
+        rho = 100.0
+        outer_loops = 1
+        max_iters = max_iters or 5  
+        margin = 30
+    else:
+        rho = 10.0
+        outer_loops = 2
+        max_iters = max_iters or 40
+        margin = 10 if prob.startswith("secret") else 0
+
     alpha = 0.01
     beta = 0.5
 
@@ -16,7 +28,7 @@ def penalty_method(f, g, c, x0, n, count, prob, max_iters=40, tol=1e-4):
 
     def penalty_grad(x):
         grad = g(x)
-        if count() >= n - 10:
+        if count() >= n - margin:
             return grad
         constraint_violations = np.maximum(0, c(x))
         J = numerical_jacobian(c, x)
@@ -36,9 +48,7 @@ def penalty_method(f, g, c, x0, n, count, prob, max_iters=40, tol=1e-4):
             J[:, i] = (func(x2) - func(x1)) / (2 * eps)
         return J
 
-    margin = 10 if prob.startswith("secret") else 0
-
-    for outer in range(2):
+    for outer in range(outer_loops):
         if count() >= n - margin:
             return x_best
         for _ in range(max_iters):
