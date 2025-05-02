@@ -38,14 +38,14 @@ def optimize(f, g, c, x0, n, count, prob):
 
         
         sampler = qmc.Sobol(d=dim, scramble=True)
-        safe_samples = max(1, num_samples // 2)
+        sobol_count = max(1, num_samples // 2)
         try:
-            sobol_samples = sampler.random_base2(int(np.ceil(np.log2(safe_samples))))
+            sobol_samples = sampler.random_base2(int(np.ceil(np.log2(sobol_count))))
         except ValueError:
-            sobol_samples = sampler.random(n=safe_samples)
+            sobol_samples = sampler.random(n=sobol_count)
 
         sobol_samples = 2.0 * (sobol_samples - 0.5)
-        sobol_samples = x0 + 1.5 * sobol_samples
+        sobol_samples = x0 + 1.0 * sobol_samples  
 
         for x_try in sobol_samples:
             if count() >= n - 1:
@@ -65,7 +65,7 @@ def optimize(f, g, c, x0, n, count, prob):
         for _ in range(num_samples // 2):
             if count() >= n - 1:
                 break
-            x_try = x0 + 1.5 * np.random.randn(dim)
+            x_try = x_best + 1.5 * np.random.randn(dim)
             constraints = c(x_try)
             violation = np.max(constraints)
             if violation <= 0:
