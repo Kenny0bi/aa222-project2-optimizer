@@ -9,7 +9,7 @@ def penalty_method(f, g, c, x0, n, count, prob, max_iters=None, tol=1e-4):
     if prob == "secret2":
         rho = 100.0
         outer_loops = 1
-        max_iters = max_iters or 5  
+        max_iters = max_iters or 5
         margin = 30
     else:
         rho = 10.0
