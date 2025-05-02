@@ -26,23 +26,28 @@ def optimize(f, g, c, x0, n, count, prob):
         return x_best
 
     elif prob == 'secret2':
-        
+        # Try penalty method first
         x_pm = penalty_method(f, g, c, x0, n, count, prob)
         if np.all(c(x_pm) <= 0):
             return x_pm
 
-        
+        # Fallback: Sobol + Gaussian
         dim = len(x0)
         remaining = n - count() - 1
-        num_samples = min(2000, remaining)
+        num_samples = min(2000, max(1, remaining))
 
         x_best = np.copy(x0)
         best_val = np.inf
         lowest_violation = np.inf
 
-        
+        # Sobol sampling
         sampler = qmc.Sobol(d=dim, scramble=True)
-        sobol_samples = sampler.random_base2(int(np.ceil(np.log2(num_samples // 2))))
+        safe_samples = max(1, num_samples // 2)
+        try:
+            sobol_samples = sampler.random_base2(int(np.ceil(np.log2(safe_samples))))
+        except ValueError:
+            sobol_samples = sampler.random(n=safe_samples)
+
         sobol_samples = 2.0 * (sobol_samples - 0.5)
         sobol_samples = x0 + 1.5 * sobol_samples
 
@@ -60,7 +65,7 @@ def optimize(f, g, c, x0, n, count, prob):
                 x_best = x_try
                 lowest_violation = violation
 
-        
+        # Gaussian fallback
         for _ in range(num_samples // 2):
             if count() >= n - 1:
                 break
