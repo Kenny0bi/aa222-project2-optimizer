@@ -1,4 +1,5 @@
 import numpy as np
+from scipy.stats import qmc
 from project2_py.penalty_method import penalty_method
 
 def optimize(f, g, c, x0, n, count, prob):
@@ -31,21 +32,50 @@ def optimize(f, g, c, x0, n, count, prob):
             return x_pm
 
         
+        dim = len(x0)
+        remaining = n - count() - 1
+        num_samples = min(2000, remaining)
+
         x_best = np.copy(x0)
         best_val = np.inf
-        dim = len(x0)
-        scale = 1.5  
-        max_tries = 2000  
+        lowest_violation = np.inf
 
-        for _ in range(max_tries):
+        
+        sampler = qmc.Sobol(d=dim, scramble=True)
+        sobol_samples = sampler.random_base2(int(np.ceil(np.log2(num_samples // 2))))
+        sobol_samples = 2.0 * (sobol_samples - 0.5)
+        sobol_samples = x0 + 1.5 * sobol_samples
+
+        for x_try in sobol_samples:
             if count() >= n - 1:
                 break
-            x_try = x0 + scale * np.random.randn(dim)
-            if np.all(c(x_try) <= 0):
+            constraints = c(x_try)
+            violation = np.max(constraints)
+            if violation <= 0:
                 val = f(x_try)
                 if val < best_val:
                     x_best = x_try
                     best_val = val
+            elif violation < lowest_violation:
+                x_best = x_try
+                lowest_violation = violation
+
+        
+        for _ in range(num_samples // 2):
+            if count() >= n - 1:
+                break
+            x_try = x0 + 1.5 * np.random.randn(dim)
+            constraints = c(x_try)
+            violation = np.max(constraints)
+            if violation <= 0:
+                val = f(x_try)
+                if val < best_val:
+                    x_best = x_try
+                    best_val = val
+            elif violation < lowest_violation:
+                x_best = x_try
+                lowest_violation = violation
+
         return x_best
 
     else:
