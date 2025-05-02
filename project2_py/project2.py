@@ -40,7 +40,6 @@ def optimize(f, g, c, x0, n, count, prob):
         x_best = np.copy(x0)
         best_val = np.inf
         lowest_violation = np.inf
-        feasible_points = []
 
         
         sampler = qmc.Sobol(d=dim, scramble=True)
@@ -51,7 +50,7 @@ def optimize(f, g, c, x0, n, count, prob):
             sobol_samples = sampler.random(n=sobol_count)
 
         sobol_samples = 2.0 * (sobol_samples - 0.5)
-        sobol_samples = x0 + 1.0 * sobol_samples
+        sobol_samples = x0 + 1.5 * sobol_samples
 
         for x_try in sobol_samples:
             if count() >= n - 1:
@@ -63,21 +62,15 @@ def optimize(f, g, c, x0, n, count, prob):
                 if val < best_val:
                     x_best = x_try
                     best_val = val
-                feasible_points.append(np.copy(x_try))
             elif violation < lowest_violation:
                 x_best = x_try
                 lowest_violation = violation
 
         
-        if feasible_points:
-            center = feasible_points[np.argmin([f(p) for p in feasible_points])]
-        else:
-            center = x_best
-
         for _ in range(num_samples // 2):
             if count() >= n - 1:
                 break
-            x_try = center + 1.0 * np.random.randn(dim)
+            x_try = x0 + 1.5 * np.random.randn(dim)
             constraints = c(x_try)
             violation = np.max(constraints)
             if violation <= 0:
