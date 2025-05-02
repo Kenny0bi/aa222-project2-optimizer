@@ -17,7 +17,7 @@ def penalty_method(f, g, c, x0, n, count, prob, max_iters=40, tol=1e-4):
     def penalty_grad(x):
         grad = g(x)
         if count() >= n - 10:
-            return grad  
+            return grad  # emergency cutoff
         constraint_violations = np.maximum(0, c(x))
         J = numerical_jacobian(c, x)
         for i in range(len(constraint_violations)):
